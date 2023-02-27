@@ -9,9 +9,9 @@ something that actually works. And Last, but not least, test cases give an easy 
 especially, when You have to refactor it. To make life a bit easier, there have been created tools to speed up creating
 test cases, and here are some of them.
 
-# Spock
+## Spock
 
-## Introduction
+### Introduction
 
 Spock is a tool for creating verbose and highly readable test cases. It uses JUnit runner, so it's accessible to
 all sorts of editing, building, or CI tools. The best thing is that Spock can be used for every JVM language. This
@@ -80,7 +80,7 @@ void shouldCalculateThePowerOfTwoNumbers(Integer base,Integer exponent,Double ex
         }
 ```
 
-## Structure and features
+### Structure and features
 
 Every specification can be divided into a couple of parts. Not all the parts are required, the final shape depends on
 specific case:
@@ -200,7 +200,7 @@ way. If You have a lot of data-driven tests, Spock is one of the best choice to 
 projects that are written in JVM languages. For more details check
 Spock [documentation](https://spockframework.org/spock/docs/2.3/all_in_one.html).
 
-# Instancio
+## Instancio
 
 ### Introduction
 
@@ -390,7 +390,7 @@ the quick solutions for it. It also provides a variety of ways for creating an o
 values.
 For more details check Instancio [documentation](https://www.instancio.org/user-guide/).
 
-# Testcontainers
+## Testcontainers
 
 ### Introduction
 
@@ -526,7 +526,7 @@ pre-download
 Docker image. Despite that, this is a powerful tool that can rise the quality of Your code. For more details check
 Testcontainers [documentation](https://www.testcontainers.org/quickstart/spock_quickstart/).
 
-# Real world example
+## Real world example
 
 Now, let's see how we can combine those 3 tools and use them in some real-world example. Assume that we have a
 clothing shop and the owners want to create an application for it. One of the features that need to be done is a search
@@ -671,7 +671,7 @@ In the example above, we can see that the Elasticsearch container configuration 
 specifications could be even more readable and free of unnecessary distractions. We are using the power of Instancio
 to create a filled entity and Testcontainers give us the possibility to test against an actual Elasticsearch instance.
 To see more examples You can
-check [this](https://github.com/sebastian-blaszczak/testcontainers-spock-instancio/blob/master/src/test/groovy/com/codepole/testcontainersspockinstancio/item/ItemDaoTest.groovy).
+check [this](https://github.com/Codepole-explorers/1-tech-talk-testcontainers-spock-instancio/blob/master/src/test/groovy/com/codepole/testcontainersspockinstancio/item/ItemDaoTest.groovy).
 Now, we have confirmation that data layers work as it should, let's test discount logic:
 
 ```groovy
@@ -750,7 +750,7 @@ are `Strings`, so we can pass there anything e.g. `TSHIRT` instead of `T_SHIRT`.
 JUit
 don't track any blocks, this is only the goodwill of the developer to keep tests clean in the Given-When-Then way.
 
-# Conclusion
+## Conclusion
 
 In this article, we have shown three powerful tools that can leverage code testing to another level. Spock framework
 that
@@ -759,11 +759,11 @@ and Testcontainers which in some integrations cases is irreplaceable. Those libr
 test
 process a bit less boring. It is also shown that those tools can be used in a real-life project, so why wait and give
 them a spin in Your next project? All examples and code for the project You can find in
-this [repository](https://github.com/sebastian-blaszczak/testcontainers-spock-instancio).
+this [repository](https://github.com/Codepole-explorers/1-tech-talk-testcontainers-spock-instancio).
 
 Happy coding!
 
-# Source
+## Source
 
 - https://spockframework.org/spock/docs/2.3/all_in_one.html
 - https://www.instancio.org/user-guide/

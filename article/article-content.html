@@ -1,0 +1,851 @@
+<h1 id="spock-instancio-and-testcontainers-3-powerful-testing-tools">Spock, Instancio and Testcontainers - 3 powerful
+    testing tools</h1>
+<p>Today, automatic tests are an indispensable part of every project (as they always should be). Good test cases can
+    increase
+    code quality and creates a feeling, that everything works as it should. They should be made in a fast and reliable
+    manner, it will encourage developers to run them as often as they can. In a properly configured process, tests
+    should
+    run every time when something is changed in code, this will create some sort of guarantee, that we&#39;ve just
+    created
+    something that actually works. And Last, but not least, test cases give an easy entry point to the code,
+    especially, when You have to refactor it. To make life a bit easier, there have been created tools to speed up
+    creating
+    test cases, and here are some of them.</p>
+<h2 id="spock">Spock</h2>
+<h3 id="introduction">Introduction</h3>
+<p>Spock is a tool for creating verbose and highly readable test cases. It uses JUnit runner, so it&#39;s accessible to
+    all sorts of editing, building, or CI tools. The best thing is that Spock can be used for every JVM language. This
+    framework has different terminology from that known in JUnit. Test classes are called <code>Specifications</code>
+    and
+    test methods are called <code>feature methods</code>, so to sum up, Spock introduces: &quot;Specifications that
+    describe
+    features&quot;. It also provides an approach to how feature methods should look, using the Given-When-Then pattern:
+</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> "<span
+        class="hljs-title">should</span> <span class="hljs-title">calculate</span> <span class="hljs-title">power</span> <span
+        class="hljs-title">of</span> <span class="hljs-title">two</span> <span class="hljs-title">numbers</span>"</span>() {
+    given:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span
+            class="hljs-title">base</span> </span>= <span class="hljs-number">2</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">exponent</span> </span>= <span
+            class="hljs-number">3</span>
+
+    when:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">result</span> </span>= Math.pow(base, exponent)
+
+    then:
+    result == <span class="hljs-number">8</span>
+}
+</code></pre>
+<p>In the above example, we can spot the so-called blocks of the feature method. Spock provides six blocks that could be
+    used in
+    there: <code>given</code>, <code>when</code>, <code>then</code>, <code>expect</code>, <code>cleanup</code>, and
+    <code>where</code>. Every block is pretty straightforward:</p>
+<ul>
+    <li>given - the block where local setup is done,</li>
+    <li>when - block defining test action,</li>
+    <li>then - here we can check all the conditions from <code>when</code> block,</li>
+    <li>expect - acts like when-then block,</li>
+    <li>cleanup - a place where we can clean all things, that was created in the feature method,</li>
+    <li>where - block for creating data-driven tests</li>
+</ul>
+<p>Now, the feature method can be rewritten in another, data-driven way:</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> "<span
+        class="hljs-title">should</span> <span class="hljs-title">calculate</span> <span class="hljs-title">power</span> <span
+        class="hljs-title">of</span> <span class="hljs-title">two</span> <span class="hljs-title">numbers</span> <span
+        class="hljs-title">using</span> <span class="hljs-title">data</span> <span
+        class="hljs-title">driven</span> <span class="hljs-title">approach</span>"</span>() {
+    expect:
+    result == Math.pow(base, exponent)
+
+    where:
+    base | exponent | result
+    <span class="hljs-number">2</span>    | <span class="hljs-number">3</span>        | <span
+            class="hljs-number">8</span>
+    <span class="hljs-number">5</span>    | <span class="hljs-number">2</span>        | <span
+            class="hljs-number">25</span>
+    <span class="hljs-number">6</span>    | <span class="hljs-number">3</span>        | <span
+            class="hljs-number">216</span>
+}
+</code></pre>
+<p>The same test can be written in JUnit, using <code>@ParametrizedTest</code>, but it is far less readable, and the
+    format of the
+    method
+    is not kept by the framework:</p>
+<pre><code class="lang-java">@ParameterizedTest
+@CsvSource(
+        <span class="hljs-keyword">value</span> = {
+                <span class="hljs-string">"2, 3, 8"</span>,
+                <span class="hljs-string">"5, 2, 25"</span>,
+                <span class="hljs-string">"6, 3, 216"</span>
+        })
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">shouldCalculateThePowerOfTwoNumbers</span>(<span
+        class="hljs-params">Integer <span
+        class="hljs-keyword">base</span>,Integer exponent,Double expected</span>)</span>{
+        <span class="hljs-comment">// expect</span>
+        <span class="hljs-keyword">double</span> result=Math.pow(<span class="hljs-keyword">base</span>,exponent);
+
+        <span class="hljs-comment">// then</span>
+        assertThat(result).isEqualTo(expected);
+        }
+</code></pre>
+<h3 id="structure-and-features">Structure and features</h3>
+<p>Every specification can be divided into a couple of parts. Not all the parts are required, the final shape depends on
+    specific case:</p>
+<ul>
+    <li><p><code>field part</code> - place where we can define all the global variables, that can be accessed in every
+        feature method,</p>
+    </li>
+    <li><p><code>fixture methods</code> - the part where a specification is set up. Spock has pre-defined methods:</p>
+        <ul>
+            <li><code>setup()</code> - a setup that runs before every feature method - JUnit @Before,</li>
+            <li><code>setupSpec()</code> - a setup that runs before all feature methods - JUnit @BeforeAll,</li>
+            <li><code>cleanup()</code> - cleaning that runs after every feature method - JUnit @After,</li>
+            <li><code>cleanupSpec()</code> - cleaning that runs after all feature methods - JUnit @AfterAll</li>
+        </ul>
+    </li>
+    <li><p><code>feature methods</code> - the part where we define the test cases, this is a core of specification.
+        Those methods will be
+        used
+        to
+        check the system behavior,</p>
+    </li>
+    <li><p><code>helper methods</code> - here we can define all the methods that help feature methods to be more
+        readable. It is also
+        common to extract code that is duplicated across the feature methods.</p>
+    </li>
+</ul>
+<p>Framework provides a variety of tools that can be used in mocking and interaction-based testing, without any
+    additional
+    libraries. Here is an example:</p>
+<pre><code class="lang-java">
+<span class="hljs-meta">@RequiredArgsConstructor</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span
+        class="hljs-title">Service</span> </span>{
+
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> Repository repository;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span
+            class="hljs-title">saveItem</span><span class="hljs-params">(String item)</span> </span>{
+        repository.save(item);
+    }
+
+}
+
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span
+        class="hljs-title">Repository</span> </span>{
+
+    List&lt;String&gt; items = <span class="hljs-keyword">new</span> ArrayList&lt;&gt;();
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span
+            class="hljs-title">save</span><span class="hljs-params">(String item)</span> </span>{
+        items.add(item);
+    }
+}
+</code></pre>
+<p>Now we can create a feature method that mocks repository and check how many times the method <code>save</code> is
+    invoked:</p>
+<pre><code class="lang-groovy"><span class="hljs-selector-tag">def</span> "<span class="hljs-selector-tag">should</span> <span
+        class="hljs-selector-tag">repository</span> <span class="hljs-selector-tag">interact</span> <span
+        class="hljs-selector-tag">once</span> <span class="hljs-selector-tag">on</span> <span class="hljs-selector-tag">save</span>"() {
+    <span class="hljs-attribute">given</span>:
+    Repository repository = <span class="hljs-built_in">Mock</span>()
+    def service = new <span class="hljs-built_in">Service</span>(repository)
+
+    when:
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"item"</span>)
+
+    then:
+    <span class="hljs-number">1</span> * repository.<span class="hljs-built_in">save</span>(<span class="hljs-string">"item"</span>)
+}
+</code></pre>
+<p>We can go even further and creates a variety of use cases:</p>
+<pre><code class="lang-groovy"><span class="hljs-selector-tag">def</span> "<span class="hljs-selector-tag">should</span> <span
+        class="hljs-selector-tag">repository</span> <span class="hljs-selector-tag">interact</span> <span
+        class="hljs-selector-tag">exact</span> 3 <span class="hljs-selector-tag">times</span>"() {
+    <span class="hljs-attribute">given</span>:
+    Repository repository = <span class="hljs-built_in">Mock</span>()
+    def service = new <span class="hljs-built_in">Service</span>(repository)
+
+    when:
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"firstItem"</span>)
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"secondItem"</span>)
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"thirdItem"</span>)
+
+    then:
+    <span class="hljs-number">3</span> * repository.<span class="hljs-built_in">save</span>(_ as String)
+}
+
+<span class="hljs-selector-tag">def</span> "<span class="hljs-selector-tag">should</span> <span
+            class="hljs-selector-tag">repository</span> <span class="hljs-selector-tag">interact</span> <span
+            class="hljs-selector-tag">between</span> 1 <span class="hljs-selector-tag">and</span> 3 <span
+            class="hljs-selector-tag">times</span>"() {
+    <span class="hljs-attribute">given</span>:
+    Repository repository = <span class="hljs-built_in">Mock</span>()
+    def service = new <span class="hljs-built_in">Service</span>(repository)
+
+    when:
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"firstItem"</span>)
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"secondItem"</span>)
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"thirdItem"</span>)
+
+    then:
+    (<span class="hljs-number">1</span>..<span class="hljs-number">3</span>) * repository.<span class="hljs-built_in">save</span>(_ as String)
+}
+
+<span class="hljs-selector-tag">def</span> "<span class="hljs-selector-tag">should</span> <span
+            class="hljs-selector-tag">repository</span> <span class="hljs-selector-tag">interact</span> <span
+            class="hljs-selector-tag">exact</span> 3 <span class="hljs-selector-tag">times</span> <span
+            class="hljs-selector-tag">when</span> <span class="hljs-selector-tag">saving</span> <span
+            class="hljs-selector-tag">value</span> <span class="hljs-selector-tag">that</span> <span
+            class="hljs-selector-tag">ends</span> <span class="hljs-selector-tag">with</span> <span
+            class="hljs-selector-tag">Item</span>"() {
+    <span class="hljs-attribute">given</span>:
+    Repository repository = <span class="hljs-built_in">Mock</span>()
+    def service = new <span class="hljs-built_in">Service</span>(repository)
+
+    when:
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"firstItem"</span>)
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"secondItem"</span>)
+    service.<span class="hljs-built_in">saveItem</span>(<span class="hljs-string">"thirdItem"</span>)
+
+    then:
+    <span class="hljs-number">3</span> * repository.<span class="hljs-built_in">save</span>({ it.endsWith(<span
+            class="hljs-string">"Item"</span>) })
+}
+</code></pre>
+<p>This example shows, how we can handle conditions of invocation. Character <code>_</code> means any value. Sometimes
+    it is needed to
+    specify of type, then we have to use the keyword <code>as</code>. We can specify an inclusive range of invocation
+    using round
+    brackets. It is also possible to specify custom conditions, and how the input of a method should look like.</p>
+<h3 id="why-you-should-use-it">Why You should use it</h3>
+<p>This framework provides all the features that can be found in JUnit, but it delivers in a more accessible and
+    readable
+    way. If You have a lot of data-driven tests, Spock is one of the best choice to make, and it runs straight away in
+    projects that are written in JVM languages. For more details check
+    Spock <a href="https://spockframework.org/spock/docs/2.3/all_in_one.html">documentation</a>.</p>
+<h2 id="instancio">Instancio</h2>
+<h3 id="introduction">Introduction</h3>
+<p>One of the first things, while creating tests, is preparing data. This part is crucial because, without it, we can&#39;t
+    test
+    anything. Unfortunately, this part creates, a lot of boilerplate code. It is common to see a huge amount of helper
+    methods or even classes that are designed only for providing a generated object for test purposes. Consider these
+    two
+    classes:</p>
+<pre><code class="lang-java"><span class="hljs-keyword">public</span> <span
+        class="hljs-keyword">record</span> Item(<span class="hljs-keyword">String</span> id,
+                   <span class="hljs-keyword">String</span> <span class="hljs-keyword">name</span>,
+                   <span class="hljs-keyword">String</span> ean,
+                   Double price,
+                   <span class="hljs-keyword">String</span> description,
+                   ItemType <span class="hljs-keyword">type</span>) <span class="hljs-comment">{
+}</span>
+</code></pre>
+<pre><code class="lang-java"><span class="hljs-symbol">record</span> DeliveryItem(<span
+        class="hljs-keyword">String </span>id,
+                    <span class="hljs-keyword">String </span><span class="hljs-meta">code</span>,
+                    LocalDateTime prepareDate,
+                    LocalDateTime deliveryDate,
+                    <span class="hljs-keyword">Item </span><span class="hljs-keyword">item) </span>{
+}
+</code></pre>
+<p>Let&#39;s create a simple test that only creates <code>DeliveryItem</code> object:</p>
+<pre><code class="lang-groovy"><span class="hljs-selector-tag">def</span> "<span class="hljs-selector-tag">should</span> <span
+        class="hljs-selector-tag">create</span> <span class="hljs-selector-tag">delivery</span> <span
+        class="hljs-selector-tag">item</span>"() {
+    <span class="hljs-attribute">given</span>:
+    def delivery = <span class="hljs-built_in">createDeliveryItem</span>()
+
+    expect:
+    delivery.<span class="hljs-built_in">id</span>() != null
+    delivery.<span class="hljs-built_in">code</span>() != null
+    delivery.<span class="hljs-built_in">prepareDate</span>() != null
+    delivery.<span class="hljs-built_in">deliveryDate</span>() != null
+    delivery.<span class="hljs-built_in">item</span>() != null
+}
+</code></pre>
+<p>This is fine, isn&#39;t it? but wait, let&#39;s see how method <code>createDeliveryItem</code> looks like:</p>
+<pre><code class="lang-groovy">private def createDeliveryItem() {
+    <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">new</span> <span
+            class="hljs-title">DeliveryItem</span>(
+            <span class="hljs-type">RandomStringUtils</span>.randomAlphabetic(<span class="hljs-number">5</span>),
+            <span class="hljs-title">RandomStringUtils</span>.<span class="hljs-title">randomAlphabetic</span>(<span
+                class="hljs-number">5</span>),
+            <span class="hljs-title">LocalDateTime</span>.<span class="hljs-title">now</span>(),
+            <span class="hljs-title">LocalDateTime</span>.<span class="hljs-title">now</span>(),
+            <span class="hljs-title">createItem</span>()
+    )
+}
+
+<span class="hljs-title">private</span> <span class="hljs-title">def</span> <span class="hljs-title">createItem</span>() {
+    <span class="hljs-title">return</span> <span class="hljs-title">new</span> <span class="hljs-title">Item</span>(
+            <span class="hljs-type">RandomStringUtils</span>.randomAlphabetic(<span class="hljs-number">5</span>),
+            <span class="hljs-title">RandomStringUtils</span>.<span class="hljs-title">randomAlphabetic</span>(<span
+                class="hljs-number">5</span>),
+            <span class="hljs-title">RandomStringUtils</span>.<span class="hljs-title">randomAlphabetic</span>(<span
+                class="hljs-number">5</span>),
+            <span class="hljs-title">random</span>.<span class="hljs-title">nextDouble</span>(),
+            <span class="hljs-title">RandomStringUtils</span>.<span class="hljs-title">randomAlphabetic</span>(<span
+                class="hljs-number">5</span>),
+            <span class="hljs-title">generateType</span>()
+    )
+}
+
+<span class="hljs-title">private</span> <span class="hljs-title">def</span> <span class="hljs-title">generateType</span>() {
+    <span class="hljs-title">def</span> <span class="hljs-title">typeIndex</span> = <span
+                class="hljs-title">random</span>.<span class="hljs-title">nextInt</span>(<span
+                class="hljs-number">0</span>, <span class="hljs-type">ItemType</span>.values().<span class="hljs-title">size</span>())
+    <span class="hljs-title">return</span> <span class="hljs-title">List</span>.<span class="hljs-title">of</span>(<span
+                class="hljs-type">ItemType</span>.values()).<span class="hljs-title">get</span>(typeIndex)
+}
+
+<span class="hljs-title">private</span> <span class="hljs-title">final</span> <span
+                class="hljs-title">ThreadLocalRandom</span> <span class="hljs-title">random</span> = <span
+                class="hljs-title">ThreadLocalRandom</span>.<span class="hljs-title">current</span>()</span>
+</code></pre>
+<p>In this case, it is required to create three helper methods, that only create one test object. Now, let&#39;s imagine
+    that <code>Item</code> have to have another field called <code>category</code> and the field
+    <code>DeliveryItem</code> should have <code>address</code>. This
+    triggers changes
+    in those 2 helper methods and probably will create another one. Instancio library was created, to handle this sort
+    of
+    problem.
+    For instance, let&#39;s see how this test will look like when the power of Instancio is used:</p>
+<pre><code class="lang-groovy"><span class="hljs-selector-tag">def</span> "<span class="hljs-selector-tag">should</span> <span
+        class="hljs-selector-tag">create</span> <span class="hljs-selector-tag">delivery</span> <span
+        class="hljs-selector-tag">item</span>"() {
+    <span class="hljs-attribute">given</span>:
+    def delivery = Instancio.<span class="hljs-built_in">create</span>(DeliveryItem.class)
+
+    expect:
+    delivery.<span class="hljs-built_in">id</span>() != null
+    delivery.<span class="hljs-built_in">code</span>() != null
+    delivery.<span class="hljs-built_in">prepareDate</span>() != null
+    delivery.<span class="hljs-built_in">deliveryDate</span>() != null
+    delivery.<span class="hljs-built_in">item</span>() != null
+}
+</code></pre>
+<p>Looks similar, right? The main difference is that the helper methods have gone. The best thing is, if
+    something will change in domain classes, it will not break the test case.</p>
+<h3 id="features">Features</h3>
+<p>Creating objects ia a core functionality of a library. It uses reflection to instantiate classes, for no argument
+    constructors it uses build-in Java mechanism, for other types of classes it uses other library called
+    <code>Objensis</code> - this
+    library wraps easy use in situations when e.g. class has required arguments.
+    There are a lot of ways to create objects using this library, this section will be provided some features, that
+    might be useful in any project.</p>
+<p>The simplest way to build an object is to use <code>create</code> static method. This allows us to create a filled
+    object with
+    randomly generated data. Only thing is to provide a type class as a method parameter and Instancio will do the magic
+    for
+    us:</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> <span
+        class="hljs-title">item</span> = <span class="hljs-title">Instancio</span>.<span
+        class="hljs-title">create</span><span class="hljs-params">(Item.<span class="hljs-keyword">class</span>)</span></span>
+</code></pre>
+<p>Instancio brings a lot of possibilities to manipulate data. One of the methods is <code>set</code>, in the example
+    below, Instancio
+    will set all <code>String</code> fields (also in nested objects) as <code>string-value</code>. The documentation
+    says &quot;The
+    allXxx() methods such as allInts(), are available for all core types.&quot;, it has a lot of predefined methods:</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> <span
+        class="hljs-title">stringValues</span> = <span class="hljs-title">Instancio</span>.<span
+        class="hljs-title">of</span><span class="hljs-params">(Item.<span
+        class="hljs-keyword">class</span>)</span></span>
+        .set(allStrings(), <span class="hljs-string">"string-value"</span>)
+        .create()
+</code></pre>
+<p>The library provides also the ability to sets only a specific field:</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> <span
+        class="hljs-title">withField</span> = <span class="hljs-title">Instancio</span>.<span
+        class="hljs-title">of</span><span class="hljs-params">(Item.<span
+        class="hljs-keyword">class</span>)</span></span>
+        .set(field(<span class="hljs-string">"description"</span>), <span class="hljs-string">"desc"</span>)
+        .create()
+</code></pre>
+<p>We can define a custom generate algorithm using <code>generate</code> method. For instance a number in the range of
+    1-50:</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> <span
+        class="hljs-title">generatedValue</span></span> = Instancio.<span class="hljs-keyword">of</span>(Item.<span
+        class="hljs-keyword">class</span>)
+        .generate(allDoubles(), generator -&gt; generator.doubles().range(<span class="hljs-number">1</span>D, <span
+            class="hljs-number">50</span>D))
+        .create()
+</code></pre>
+<p>In the library, we can find two similar methods <code>set</code> and <code>supply</code>. The <code>set</code> method
+    allows setting the static value to
+    the
+    object. On the other hand, <code>supply</code> method will create a new instance of value when setting fields. So in
+    the example
+    below, all strings will
+    have the same value <code>same-string</code>, but all the dates will differ from each other:</p>
+<pre><code class="lang-groovy">def setSupply = Instancio.<span class="hljs-keyword">of</span>(DeliveryItem.class)
+        .set(allStrings(), <span class="hljs-string">"same-string"</span>)
+        .supply<span class="hljs-function"><span class="hljs-params">(all(LocalDateTime.class), (Supplier) (() -&gt; LocalDateTime.now()))</span>
+        .<span class="hljs-title">create</span><span class="hljs-params">()</span></span>
+</code></pre>
+<p>Instancio gives a powerful tool called <code>model</code>. It is a convenient way of defining objects that have a
+    common core, so
+    that
+    can be defined in one place and re-used for all other objects:</p>
+<pre><code class="lang-groovy">def model = Instancio.<span class="hljs-keyword">of</span>(DeliveryItem.<span
+        class="hljs-built_in">class</span>)
+        .<span class="hljs-keyword">set</span>(all(LocalDateTime.<span class="hljs-built_in">class</span>), LocalDateTime.now())
+        .<span class="hljs-keyword">set</span>(field(<span class="hljs-string">"id"</span>), <span class="hljs-string">"id"</span>)
+        .<span class="hljs-keyword">set</span>(field(<span class="hljs-string">"code"</span>), <span
+            class="hljs-string">"code"</span>)
+        .toModel()
+</code></pre>
+<p>Using the model defined above, Instancio allows the creation two objects with the same delivery fields and different
+    items objects:</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> <span
+        class="hljs-title">firstDelivery</span> = <span class="hljs-title">Instancio</span>.<span
+        class="hljs-title">of</span><span class="hljs-params">(model)</span></span>
+        .set(field(<span class="hljs-string">"item"</span>), Instancio.create(Item.<span
+            class="hljs-keyword">class</span>))
+        .create()
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">secondDelivery</span> = <span
+        class="hljs-title">Instancio</span>.<span class="hljs-title">of</span><span
+        class="hljs-params">(model)</span></span>
+        .set(field(<span class="hljs-string">"item"</span>), Instancio.create(Item.<span
+            class="hljs-keyword">class</span>))
+        .create()
+</code></pre>
+<h3 id="why-you-should-use-it">Why You should use it</h3>
+<p>The best code to maintain is the one that not exists. This library helps reduce boilerplate code to an absolute
+    minimum
+    and makes the process of creating test data, fast and simple. If Your project has a lot of useless code, Instancio
+    is
+    one of
+    the quick solutions for it. It also provides a variety of ways for creating an object, with custom modes of
+    generating
+    values.
+    For more details check Instancio <a href="https://www.instancio.org/user-guide/">documentation</a>.</p>
+<h2 id="testcontainers">Testcontainers</h2>
+<h3 id="introduction">Introduction</h3>
+<p>Have You ever had problems with spinning up the Docker container in Your CI pipeline or ever wonder how could You
+    simplify
+    that process? The answer to Your problem is Testcontainers. This library can encapsulate everything related to the
+    Docker
+    containers in Your test cases! It brings integration tests to another level, from now You don&#39;t have to mock
+    services
+    or use in-memory databases (such as H2 - which, in some cases, don&#39;t have all the features). It has a lot of use
+    cases
+    such as:</p>
+<ul>
+    <li>Providing real data layer,</li>
+    <li>Allows running acceptance tests involving containerized web browsers,</li>
+    <li>Spinning up cloud environment - LocalStack(AWS), Azurite or GCP emulators,</li>
+    <li>Delivering an easy way to test Dockerized microservices,</li>
+    <li>Anything You can think of - that has a Docker container</li>
+</ul>
+<h3 id="features">Features</h3>
+<p>Testcontainers have already prepared some pre-defined modules, that You can use out of the box e.g.
+    <a href="https://www.testcontainers.org/modules/databases/mongodb/">mongoDB</a>. There are a lot more prepared
+    modules,
+    to check all of them, You can go to <a href="https://www.testcontainers.org/">Testcontainers website</a> and open
+    <code>Modules</code>
+    section.
+    One note, to use this library make sure, that the Docker service is up and running! Let&#39;s now spin some
+    containers:</p>
+<pre><code class="lang-groovy">private NginxContainer nginx = new NginxContainer(DockerImageName.parse(<span
+        class="hljs-string">"nginx"</span>))
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> "<span class="hljs-title">should</span> <span
+        class="hljs-title">create</span> <span class="hljs-title">nginx</span> <span class="hljs-title">container</span>"</span>() {
+    given:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">port</span> </span>= nginx.firstMappedPort
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">host</span> </span>= nginx.host
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getRequest</span> </span>= HttpRequest.newBuilder(URI.create(<span
+            class="hljs-string">"http://"</span> + host + <span class="hljs-string">":"</span> + port))
+            .GET()
+            .build()
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">client</span> </span>= HttpClient.newHttpClient()
+
+    when:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">response</span> </span>= client.send(getRequest, HttpResponse.BodyHandlers.ofString())
+
+    then:
+    response.body().contains(<span class="hljs-string">"Welcome to nginx!"</span>)
+}
+</code></pre>
+<p>This is all it takes to spin up a Docker container. The test specification above uses a predefined module of Nginx,
+    which
+    simplify the process of setting up a container. Testcontainers provide all kinds of features that Docker has, so if
+    there is a
+    need of creating a custom network or mounting volumes, the library provides all:</p>
+<pre><code class="lang-groovy"><span class="hljs-keyword">new</span> <span class="hljs-type">NginxContainer</span>(DockerImageName.parse(<span
+        class="hljs-string">"nginx"</span>))
+        .withNetwork(Network.<span class="hljs-keyword">new</span><span class="hljs-type">Network</span>())
+        .withNetworkAliases(<span class="hljs-string">"nginx-network"</span>)
+        .withClasspathResourceMapping(<span class="hljs-string">"hello-world.html"</span>,
+                <span class="hljs-string">"/usr/share/nginx/html/hello-world.html"</span>,
+                BindMode.READ_ONLY)
+</code></pre>
+<p>Using the above container configuration, Testcontainers will create nginx server, with a custom network
+    called <code>nginx-network</code>
+    and mount <code>hello-world.html</code> into a static Nginx repository. It is possible to check all of that:</p>
+<pre><code class="lang-groovy"><span class="hljs-selector-tag">def</span> "<span class="hljs-selector-tag">check</span> <span
+        class="hljs-selector-tag">nginx</span> <span class="hljs-selector-tag">network</span>"() {
+    <span class="hljs-attribute">expect</span>:
+    nginx.<span class="hljs-built_in">getNetworkAliases</span>().<span class="hljs-built_in">contains</span>(<span
+            class="hljs-string">"nginx-network"</span>)
+}
+</code></pre>
+<p>Nginx container should contain static resource on path <code>/hello-world.html</code>, let&#39;s check that also:</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> <span
+        class="hljs-title">helloWorldFile</span> </span>= <span class="hljs-string">"hello-world.html"</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> "<span class="hljs-title">should</span> <span
+        class="hljs-title">create</span> <span class="hljs-title">nginx</span> <span class="hljs-title">container</span> <span
+        class="hljs-title">with</span> <span class="hljs-title">mounted</span> <span
+        class="hljs-title">volume</span>"</span>() {
+    given:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">port</span> </span>= nginx.firstMappedPort
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">host</span> </span>= nginx.host
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getRequest</span> </span>= HttpRequest.newBuilder(URI.create(<span
+            class="hljs-string">"http://"</span> + host + <span class="hljs-string">":"</span> + port + <span
+            class="hljs-string">"/"</span> + helloWorldFile))
+            .GET()
+            .build()
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">client</span> </span>= HttpClient.newHttpClient()
+
+    when:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">response</span> </span>= client.send(getRequest, HttpResponse.BodyHandlers.ofString())
+
+    then:
+    response.body().contains(<span class="hljs-string">"This content is served using Nginx."</span>)
+}
+</code></pre>
+<p>Library provides a possibility to check, what is going on inside the container. This can be done using the container
+    log
+    feature,
+    it could be very helpful when using custom containerized services - like, the ones, that were created as
+    microservice in
+    our project:</p>
+<pre><code class="lang-groovy"><span class="hljs-function"><span class="hljs-keyword">def</span> <span
+        class="hljs-title">helloWorldFile</span> </span>= <span class="hljs-string">"hello-world.html"</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> "<span class="hljs-title">should</span> <span
+        class="hljs-title">check</span> <span class="hljs-title">nginx</span> <span class="hljs-title">container</span> <span
+        class="hljs-title">logs</span>"</span>() {
+    given:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">port</span> </span>= nginx.firstMappedPort
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">host</span> </span>= nginx.host
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getRequest</span> </span>= HttpRequest.newBuilder(URI.create(<span
+            class="hljs-string">"http://"</span> + host + <span class="hljs-string">":"</span> + port + <span
+            class="hljs-string">"/"</span> + helloWorldFile))
+            .GET()
+            .build()
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">client</span> </span>= HttpClient.newHttpClient()
+
+    and:
+    client.send(getRequest, HttpResponse.BodyHandlers.ofString())
+
+    when:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">logs</span> </span>= nginx.getLogs()
+
+    then:
+    logs.contains(<span class="hljs-string">"GET /hello-world.html"</span>)
+}
+</code></pre>
+<h3 id="why-you-should-use-it">Why You should use it</h3>
+<p>This library was created for providing an easy and fast way to integrate with containers in test cases. It works
+    perfectly, with all kinds of data layers (like DB) and external services. The main principle here is to be as close
+    to
+    the production environment as possible. It could detect bugs on the development level. Testcontainers create
+    opportunities to discover
+    new things, and it simplifies the way of experimenting with them. The main problem here is time. It takes a while to
+    spin up a
+    container, and even more when we don&#39;t have the downloaded Docker image that we want to use (it has to download
+    first). It could be beneficial to create test cases, that can re-use running containers. Another thing is to
+    pre-download
+    Docker image. Despite that, this is a powerful tool that can rise the quality of Your code. For more details check
+    Testcontainers <a href="https://www.testcontainers.org/quickstart/spock_quickstart/">documentation</a>.</p>
+<h2 id="real-world-example">Real world example</h2>
+<p>Now, let&#39;s see how we can combine those 3 tools and use them in some real-world example. Assume that we have a
+    clothing shop and the owners want to create an application for it. One of the features that need to be done is a
+    search
+    engine
+    for products. It should have the ability to quickly find items using a full-text search. The suitable solution here
+    would be Elasticsearch.
+    The client also wants to create some discounts with different politics e.g. using code or item-based discounts.
+    If there are two applicable discounts, the service should take the one with the lowest price. Let&#39;s create some
+    code for
+    those requirements:</p>
+<pre><code class="lang-java">
+<span class="hljs-variable">@Builder</span>
+<span class="hljs-variable">@Document</span>(indexName = <span class="hljs-string">"item"</span>)
+public record Item(<span class="hljs-variable">@Id</span> String id,
+                   String name,
+                   String ean,
+                   Double price,
+                   String description,
+                   ItemType type) {
+}
+
+public enum ItemType {
+    <span class="hljs-selector-tag">T_SHIRT</span>, <span class="hljs-selector-tag">SHIRT</span>, <span
+        class="hljs-selector-tag">TROUSERS</span>, <span class="hljs-selector-tag">BELT</span>, <span
+        class="hljs-selector-tag">SOCKS</span>
+}
+</code></pre>
+<p>We have just described how an item should look like, now let&#39;s see how discounts may be defined:</p>
+<pre><code class="lang-java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span
+        class="hljs-keyword">interface</span> <span class="hljs-title">Discount</span> </span>{
+
+    <span class="hljs-keyword">Double</span> calculateDiscount(<span class="hljs-keyword">List</span>&lt;ItemDto&gt; items, String code);
+
+    <span class="hljs-keyword">default</span> <span class="hljs-keyword">Double</span> noDiscount(<span
+            class="hljs-keyword">List</span>&lt;ItemDto&gt; items) {
+        <span class="hljs-keyword">return</span> items.stream()
+                .map(ItemDto::price)
+                .reduce(<span class="hljs-keyword">Double</span>::sum)
+                .orElse(<span class="hljs-number">0</span>D);
+    }
+
+    <span class="hljs-keyword">default</span> <span class="hljs-keyword">Double</span> percentageMultiplier(<span
+            class="hljs-keyword">Double</span> discount) {
+        <span class="hljs-keyword">return</span> Optional.of(discount)
+                .filter(value -&gt; value &lt; <span class="hljs-number">100</span>)
+                .map(value -&gt; (<span class="hljs-number">100</span> - value) / <span class="hljs-number">100</span>)
+                .orElseThrow(IllegalArgumentException::new);
+    }
+
+    <span class="hljs-keyword">default</span> <span class="hljs-keyword">Double</span> priceWithDiscount(<span
+            class="hljs-keyword">List</span>&lt;ItemDto&gt; items, <span class="hljs-keyword">Double</span> discount) {
+        <span class="hljs-keyword">return</span> noDiscount(items) * percentageMultiplier(discount);
+    }
+}
+
+@RequiredArgsConstructor
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span
+            class="hljs-title">CodeDiscount</span> <span class="hljs-keyword">implements</span> <span
+            class="hljs-title">Discount</span> </span>{
+
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> String discountCode;
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span
+            class="hljs-keyword">Double</span> discount;
+
+    @Override
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">Double</span> calculateDiscount(<span
+            class="hljs-keyword">List</span>&lt;ItemDto&gt; items, String code) {
+        <span class="hljs-keyword">return</span> codeMatches(code) ? priceWithDiscount(items, discount) : noDiscount(items);
+    }
+
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">boolean</span> codeMatches(String code) {
+        <span class="hljs-keyword">return</span> code.equals(discountCode);
+    }
+}
+
+@RequiredArgsConstructor
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span
+            class="hljs-title">SpecialItemTypeDiscount</span> <span class="hljs-keyword">implements</span> <span
+            class="hljs-title">Discount</span> </span>{
+
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> ItemType type;
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span
+            class="hljs-keyword">Double</span> discount;
+
+    @Override
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">Double</span> calculateDiscount(<span
+            class="hljs-keyword">List</span>&lt;ItemDto&gt; items, String code) {
+        <span class="hljs-keyword">return</span> hasType(items, type) ? priceWithDiscount(items, discount) : noDiscount(items);
+    }
+
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">boolean</span> hasType(<span
+            class="hljs-keyword">List</span>&lt;ItemDto&gt; items, ItemType type) {
+        <span class="hljs-keyword">return</span> items.stream()
+                .map(ItemDto::type)
+                .anyMatch(itemType -&gt; itemType == type);
+    }
+
+}
+</code></pre>
+<p>Everything is set up, so now we can move to actual testing. Our goal is to create a similar test environment to the
+    production one, so
+    we won&#39;t be satisfied using some in-memory database for search testing. In this case, Testcontainers becomes
+    handy and
+    on top of that, we don&#39;t have to create boilerplate code only for test purposes, so we can use Instancio in that
+    matter:</p>
+<pre><code class="lang-groovy"><span class="hljs-meta">@Testcontainers</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span
+        class="hljs-title">ElasticContainerSpec</span> <span class="hljs-keyword">extends</span> <span
+        class="hljs-title">Specification</span> </span>{
+
+    static <span class="hljs-keyword">protected</span> <span class="hljs-type">ElasticsearchContainer</span> elasticsearch
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">setupSpec</span></span>() {
+        elasticsearch = <span class="hljs-keyword">new</span> <span
+            class="hljs-type">ElasticsearchContainer</span>(<span class="hljs-type">DockerImageName</span>
+                .parse(<span class="hljs-string">"docker.elastic.co/elasticsearch/elasticsearch"</span>)
+                .withTag(<span class="hljs-string">"7.17.8"</span>))
+                .withExposedPorts(<span class="hljs-number">9200</span>)
+        elasticsearch.start()
+    }
+}
+
+<span class="hljs-meta">@SpringBootTest</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ItemDaoTest</span> <span
+        class="hljs-keyword">extends</span> <span class="hljs-title">ElasticContainerSpec</span> </span>{
+
+    <span class="hljs-meta">@Autowired</span>
+    <span class="hljs-type">ItemDao</span> itemDao
+
+    <span class="hljs-meta">@DynamicPropertySource</span>
+    static void registerProperties(<span class="hljs-type">DynamicPropertyRegistry</span> properties) {
+        properties.add(<span class="hljs-string">"elastic.host"</span>, elasticsearch::getHttpHostAddress)
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> "<span class="hljs-title">should</span> <span
+            class="hljs-title">find</span> <span class="hljs-title">item</span> <span class="hljs-title">by</span> <span
+            class="hljs-title">partial</span> <span class="hljs-title">name</span>"</span>() {
+        given:
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">item</span> </span>= <span
+            class="hljs-type">Instancio</span>.create(<span class="hljs-type">Item</span>.<span class="hljs-keyword">class</span>)
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span
+                class="hljs-title">savedItem</span> </span>= itemDao.save(item)
+
+        and:
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">query</span> </span>= substring(item.name())
+
+        when:
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span
+                class="hljs-title">itemsFound</span> </span>= itemDao.findByQuery(<span class="hljs-keyword">new</span> <span
+            class="hljs-type">ItemQuery</span>(query))
+
+        then:
+        itemsFound.isPresent()
+        itemsFound.get().stream()
+                .filter { it -&gt; it.id() == savedItem.id() }
+                .allMatch { it -&gt; it == savedItem }
+    }
+}
+</code></pre>
+<p>In the example above, we can see that the Elasticsearch container configuration can be extracted to another class, so
+    specifications could be even more readable and free of unnecessary distractions. We are using the power of Instancio
+    to create a filled entity and Testcontainers give us the possibility to test against an actual Elasticsearch
+    instance.
+    To see more examples You can
+    check <a
+            href="https://github.com/Codepole-explorers/1-tech-talk-testcontainers-spock-instancio/blob/master/src/test/groovy/com/codepole/testcontainersspockinstancio/item/ItemDaoTest.groovy">this</a>.
+    Now, we have confirmation that data layers work as it should, let&#39;s test discount logic:</p>
+<pre><code class="lang-groovy"><span class="hljs-meta">@SpringBootTest</span>(classes = <span class="hljs-type">PriceCalculator</span>.<span
+        class="hljs-keyword">class</span>)
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span
+        class="hljs-title">PriceCalculatorSpockTest</span> <span class="hljs-keyword">extends</span> <span
+        class="hljs-title">Specification</span> </span>{
+
+    <span class="hljs-meta">@Autowired</span>
+    <span class="hljs-keyword">private</span> <span class="hljs-type">PriceCalculator</span> calculator
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> "<span class="hljs-title">should</span> <span
+            class="hljs-title">calculate</span> <span class="hljs-title">price</span> <span
+            class="hljs-title">based</span> <span class="hljs-title">on</span> <span
+            class="hljs-title">input</span>"</span>() {
+        given:
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">items</span> </span>= [
+                <span class="hljs-type">ItemDto</span>.builder()
+                        .price(price)
+                        .<span class="hljs-keyword">type</span>(<span class="hljs-class"><span
+            class="hljs-keyword">type</span>)</span>
+                        .build()
+        ]
+
+        when:
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span
+                class="hljs-title">resultPrice</span> </span>= calculator.calculate(items, code)
+
+        then:
+        resultPrice.isPresent()
+        resultPrice.get() == afterDiscount
+
+        where:
+        <span class="hljs-class"><span class="hljs-keyword">type</span>           <span
+                class="hljs-title">|</span> <span class="hljs-title">price</span> <span
+                class="hljs-title">|</span> <span class="hljs-title">code</span>              <span
+                class="hljs-title">|</span> <span class="hljs-title">afterDiscount</span></span>
+        <span class="hljs-type">ItemType</span>.<span class="hljs-type">SHIRT</span> | <span
+            class="hljs-number">50</span>D   | <span class="hljs-string">"SPECIAL_CODE_15"</span> | <span
+            class="hljs-number">40</span>D
+        <span class="hljs-type">ItemType</span>.<span class="hljs-type">BELT</span>  | <span
+            class="hljs-number">50</span>D   | <span class="hljs-string">"WRONG_CODE"</span>      | <span
+            class="hljs-number">45</span>D
+        <span class="hljs-type">ItemType</span>.<span class="hljs-type">SHIRT</span> | <span
+            class="hljs-number">50</span>D   | <span class="hljs-string">"WRONG_CODE"</span>      | <span
+            class="hljs-number">50</span>D
+        <span class="hljs-type">ItemType</span>.<span class="hljs-type">SOCKS</span> | <span
+            class="hljs-number">50</span>D   | <span class="hljs-string">""</span>                | <span
+            class="hljs-number">50</span>D
+    }
+}
+</code></pre>
+<p>To comparison here is the same test case written in JUnit:</p>
+<pre><code class="lang-java">
+<span class="hljs-meta">@SpringBootTest</span>(classes = <span class="hljs-type">PriceCalculator</span>.<span
+        class="hljs-keyword">class</span>)
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span
+        class="hljs-title">PriceCalculatorTest</span> </span>{
+
+    <span class="hljs-meta">@Autowired</span>
+    <span class="hljs-keyword">private</span> <span class="hljs-type">PriceCalculator</span> calculator;
+
+    <span class="hljs-meta">@ParameterizedTest</span>
+    <span class="hljs-meta">@CsvSource</span>(
+            value = {
+                    <span class="hljs-string">"SHIRT, 50, SPECIAL_CODE_15, 40"</span>,
+                    <span class="hljs-string">"BELT, 50, WRONG_CODE, 45"</span>,
+                    <span class="hljs-string">"SHIRT, 50, WRONG_CODE, 50"</span>,
+                    <span class="hljs-string">"SOCKS, 50, {}, 50"</span>,
+            },
+            emptyValue = <span class="hljs-string">"{}"</span>)
+    void shouldCalculatePrice(<span class="hljs-type">ItemType</span> <span class="hljs-class"><span
+        class="hljs-keyword">type</span>, <span class="hljs-title">Double</span> <span class="hljs-title">price</span>, <span
+        class="hljs-title">String</span> <span class="hljs-title">code</span>, <span
+        class="hljs-title">Double</span> <span class="hljs-title">afterDiscount</span>) </span>{
+        <span class="hljs-comment">// given</span>
+        <span class="hljs-type">List</span>&lt;<span class="hljs-type">ItemDto</span>&gt; items = <span
+        class="hljs-type">List</span>.of(<span class="hljs-type">ItemDto</span>.builder()
+                .price(price)
+                .<span class="hljs-keyword">type</span>(<span class="hljs-class"><span class="hljs-keyword">type</span>)</span>
+                .build());
+
+        <span class="hljs-comment">// when</span>
+        <span class="hljs-type">Optional</span>&lt;<span class="hljs-type">Double</span>&gt; resultPrice = calculator.calculate(items, code);
+
+        <span class="hljs-comment">// then</span>
+        assertThat(resultPrice).isPresent().contains(afterDiscount);
+    }
+
+}
+</code></pre>
+<p>As You can see, the data that is used in this test case is not clear, and adding a new portion of data can be tricky.
+    All
+    parameters
+    are <code>Strings</code>, so we can pass there anything e.g. <code>TSHIRT</code> instead of <code>T_SHIRT</code>.
+    The other problem is the structure of,
+    JUit
+    don&#39;t track any blocks, this is only the goodwill of the developer to keep tests clean in the Given-When-Then
+    way.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this article, we have shown three powerful tools that can leverage code testing to another level. Spock framework
+    that
+    was created to be more verbose and readable, Instancio that can speed up the preparation of tests
+    and Testcontainers which in some integrations cases is irreplaceable. Those libraries can improve readability and
+    make
+    test
+    process a bit less boring. It is also shown that those tools can be used in a real-life project, so why wait and
+    give
+    them a spin in Your next project? All examples and code for the project You can find in
+    this <a href="https://github.com/Codepole-explorers/1-tech-talk-testcontainers-spock-instancio">repository</a>.</p>
+<p>Happy coding!</p>
+<h2 id="source">Source</h2>
+<ul>
+    <li><a href="https://spockframework.org/spock/docs/2.3/all_in_one.html">https://spockframework.org/spock/docs/2.3/all_in_one.html</a>
+    </li>
+    <li><a href="https://www.instancio.org/user-guide/">https://www.instancio.org/user-guide/</a></li>
+    <li><a href="https://www.testcontainers.org/quickstart/spock_quickstart/">https://www.testcontainers.org/quickstart/spock_quickstart/</a>
+    </li>
+</ul>
